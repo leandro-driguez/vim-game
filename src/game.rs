@@ -17,15 +17,15 @@ impl Game {
     pub fn new(h: usize, w: usize) -> Self {
         let mut rng = rand::rng();
 
-        let x = rng.random_range(0..(h));
-        let y = rng.random_range(0..(w));
+        let x = rng.random_range(0..h);
+        let y = rng.random_range(0..w);
 
-        let mut i = rng.random_range(0..(h));
-        let mut j = rng.random_range(0..(w));
+        let mut i = rng.random_range(0..h);
+        let mut j = rng.random_range(0..w);
 
         while x == i && y == j {
-            i = rng.random_range(0..(h));
-            j = rng.random_range(0..(w));
+            i = rng.random_range(0..h);
+            j = rng.random_range(0..w);
         }
 
         let mut snake: VecDeque<(usize,usize)> = VecDeque::new();
@@ -55,13 +55,13 @@ impl Game {
             // food position and increase score 
             let mut rng = rand::rng();
 
-            let mut x = rng.random_range(0..(self.height));
-            let mut y = rng.random_range(0..(self.width));
+            let mut x = rng.random_range(0..self.height);
+            let mut y = rng.random_range(0..self.width);
 
             // ensure the new food position is empty
             while self.grid[x][y] != 0 {
-                x = rng.random_range(0..(self.height));
-                y = rng.random_range(0..(self.width));
+                x = rng.random_range(0..self.height);
+                y = rng.random_range(0..self.width);
             }
 
             self.food = (x,y);
@@ -87,9 +87,9 @@ impl Game {
     fn next_position(&self) -> (usize,usize) {
         let Some((i,j)) = self.snake.back() else { todo!() };
         match self.dir {
-            Direction::Up    => (0.max(*i - 1), *j),
+            Direction::Up    => ((*i + self.height - 1) % self.height, *j),
             Direction::Down  => ((*i + 1) % self.height, *j),
-            Direction::Left  => (*i, 0.max(*j - 1)),
+            Direction::Left  => (*i, (*j + self.width - 1) % self.width),
             Direction::Right => (*i, (*j + 1) % self.width),
         }
     }

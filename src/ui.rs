@@ -1,13 +1,20 @@
 use crate::game::Game;
 
 pub fn get_frame(g: &Game) -> String {
-    let mut frame = String::from("");
-    for i in 0..(g.height as usize) {
-        let mut current_line = String::from("");
-        for j in 0..(g.width as usize) {
-           current_line = format!("{} {}", current_line, if g.grid[i][j] == 0 { " " } else { if g.grid[i][j] == 1 {"o"} else { "x" } }); 
+    let mut frame = String::new();
+    for i in 0..g.height {
+        for j in 0..g.width {
+            let cell = match g.grid[i][j] {
+                0 => ' ',
+                1 => 'o',
+                2 => 'x',
+                _ => '?',
+            };
+            frame.push(cell);
         }
-        frame = format!("{}\n{}", frame, current_line);
+        if i+1 < g.height {
+            frame.push_str("\n");
+        }
     } 
     return frame;
 }

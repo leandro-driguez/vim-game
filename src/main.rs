@@ -14,12 +14,13 @@ fn clear() {
 }
 
 fn main() -> io::Result<()> {
-    enable_raw_mode()?;
     
     let mut g = game::Game::new(10,10);  
 
     loop {
         clear();
+
+        g.update();
 
         let frame = format!(
             "{}", ui::get_frame(&g)
@@ -28,6 +29,7 @@ fn main() -> io::Result<()> {
         print!("{frame}");
         io::stdout().flush()?; // force output now
 
+        enable_raw_mode()?;
         if event::poll(std::time::Duration::from_millis(500))? {
             if let Event::Key(key_event) = event::read()? {
                 let new_dir = match key_event.code {
@@ -40,7 +42,7 @@ fn main() -> io::Result<()> {
                 g.dir = new_dir;
             }
         }
-        thread::sleep(Duration::from_millis(500));
+        disable_raw_mode();
     }
     Ok(())
 }
