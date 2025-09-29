@@ -1,11 +1,9 @@
 use std::{io::{self, Write}, thread, time::Duration};
-use crossterm::{
-    event::{self, Event, KeyCode},
-    terminal::{enable_raw_mode, disable_raw_mode},
-};
+
 
 mod game;
 mod ui;
+mod input;
 
 
 fn clear() {
@@ -29,20 +27,13 @@ fn main() -> io::Result<()> {
         print!("{frame}");
         io::stdout().flush()?; // force output now
 
-        enable_raw_mode()?;
-        if event::poll(std::time::Duration::from_millis(500))? {
-            if let Event::Key(key_event) = event::read()? {
-                let new_dir = match key_event.code {
-                    KeyCode::Char('h') => game::Direction::Left,
-                    KeyCode::Char('j') => game::Direction::Down,
-                    KeyCode::Char('k') => game::Direction::Up,
-                    KeyCode::Char('l') => game::Direction::Right,
-                    _ => g.dir,
-                };
-                g.dir = new_dir;
-            }
+        if let Ok(event) = input::handle_key_events() {
+            match event {
+                input::CustomEvent::Direction(dir) => { g.dir = dir; }
+                input::CustomEvent::Exit => { break; }
+                _ => { continue; }
+            };
         }
-        disable_raw_mode();
     }
     Ok(())
 }
