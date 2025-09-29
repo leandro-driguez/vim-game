@@ -13,16 +13,16 @@ fn clear() {
     print!("\x1b[2J\x1b[H");
 }
 
-fn main() -> crossterm::Result<()> {
+fn main() -> io::Result<()> {
     enable_raw_mode()?;
     
-    let mut g = game::Game::new(100,100);  
+    let mut g = game::Game::new(10,10);  
 
     loop {
         clear();
 
         let frame = format!(
-            ui::get_frame(g)
+            "{}", ui::get_frame(&g)
         );
 
         print!("{frame}");
@@ -30,12 +30,14 @@ fn main() -> crossterm::Result<()> {
 
         if event::poll(std::time::Duration::from_millis(500))? {
             if let Event::Key(key_event) = event::read()? {
-                match key_event.code {
-                    KeyCode::Char('h') => g.change_dir(game::Direction::Left),
-                    KeyCode::Char('j') => g.change_dir(game::Direction::Down),
-                    KeyCode::Char('k') => g.change_dir(game::Direction::Up),
-                    KeyCode::Char('l') => g.change_dir(game::Direction::Right),
-                }
+                let new_dir = match key_event.code {
+                    KeyCode::Char('h') => game::Direction::Left,
+                    KeyCode::Char('j') => game::Direction::Down,
+                    KeyCode::Char('k') => game::Direction::Up,
+                    KeyCode::Char('l') => game::Direction::Right,
+                    _ => g.dir,
+                };
+                g.dir = new_dir;
             }
         }
         thread::sleep(Duration::from_millis(500));

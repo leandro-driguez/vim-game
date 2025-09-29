@@ -4,36 +4,36 @@ use std::collections::VecDeque;
 pub enum Direction { Up, Down, Left, Right }
 
 pub struct Game {
-    height: u8,
-    width: u8,
-    grid: Vec<Vec<u8>>,
-    snake: VecDeque<(u8,u8)>,
-    food: (u8,u8),
-    dir: Direction,
-    score: i16,
+    pub height: usize,
+    pub width: usize,
+    pub grid: Vec<Vec<usize>>,
+    pub dir: Direction,
+    pub score: i16,
+    snake: VecDeque<(usize,usize)>,
+    food: (usize,usize),
 }
 
 impl Game {
-    pub fn new(h: u8, w: u8) -> Self {
+    pub fn new(h: usize, w: usize) -> Self {
         let mut rng = rand::rng();
 
-        let x = rng.random_range(0..h);
-        let y = rng.random_range(0..w);
+        let x = rng.random_range(0..(h));
+        let y = rng.random_range(0..(w));
 
-        let mut i = rng.random_range(0..h);
-        let mut j = rng.random_range(0..w);
+        let mut i = rng.random_range(0..(h));
+        let mut j = rng.random_range(0..(w));
 
         while x == i && y == j {
-            i = rng.random_range(0..h);
-            j = rng.random_range(0..w);
+            i = rng.random_range(0..(h));
+            j = rng.random_range(0..(w));
         }
 
-        let snake: VecDeque<(u8,u8)> = VecDeque::new();
+        let mut snake: VecDeque<(usize,usize)> = VecDeque::new();
         snake.push_back((x,y));
 
-        let mut grid: Vec<Vec<u8>> = vec![vec![0;w.into()];h.into()];
+        let mut grid: Vec<Vec<usize>> = vec![vec![0;w];h];
         grid[x][y] = 1;
-        grid[i][j] = -1;
+        grid[i][j] = 2;
     
         return Self {
             height: h,
@@ -55,23 +55,23 @@ impl Game {
             // food position and increase score 
             let mut rng = rand::rng();
 
-            let mut x = rng.random_range(0..self.height);
-            let mut y = rng.random_range(0..self.width);
+            let mut x = rng.random_range(0..(self.height));
+            let mut y = rng.random_range(0..(self.width));
 
             // ensure the new food position is empty
             while self.grid[x][y] != 0 {
-                x = rng.random_range(0..self.height);
-                y = rng.random_range(0..self.width);
+                x = rng.random_range(0..(self.height));
+                y = rng.random_range(0..(self.width));
             }
 
             self.food = (x,y);
-            self.grid[x][y] = -1;
+            self.grid[x][y] = 2;
 
             self.score += 1;
         }
         else { 
             // remove the tail of the snake
-            let Some((x, y)) = self.snake.pop_front();
+            let Some((x, y)) = self.snake.pop_front() else { todo!() };
             self.grid[x][y] = 0;
         }
         
@@ -84,8 +84,8 @@ impl Game {
        self.dir = dir; 
     }
 
-    fn next_position(&self) -> (u8,u8) {
-        let Some((i,j)) = self.snake.back();
+    fn next_position(&self) -> (usize,usize) {
+        let Some((i,j)) = self.snake.back() else { todo!() };
         match self.dir {
             Direction::Up    => (0.max(*i - 1), *j),
             Direction::Down  => ((*i + 1) % self.height, *j),
