@@ -8,6 +8,7 @@ use crate::game;
 
 pub enum CustomEvent {
     Direction(crate::game::Direction),
+    Restart,
     Nothing,
     Exit,
 }
@@ -24,6 +25,7 @@ pub fn handle_key_events() -> Result<CustomEvent, io::Error> {
                 KeyCode::Char('k') => CustomEvent::Direction(crate::game::Direction::Up),
                 KeyCode::Char('l') => CustomEvent::Direction(crate::game::Direction::Right),
                 KeyCode::Char('q') => CustomEvent::Exit,
+                KeyCode::Char('r') => CustomEvent::Restart,
                 _ => CustomEvent::Nothing,
             };
         }

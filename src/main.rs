@@ -1,5 +1,4 @@
-use std::{io::{self, Write}, thread, time::Duration};
-
+use std::io::{self, Write};
 
 mod game;
 mod ui;
@@ -18,18 +17,19 @@ fn main() -> io::Result<()> {
     loop {
         clear();
 
-        g.update();
+        if !g.game_over {
+            g.update();
+        }
 
-        let frame = format!(
-            "{}", ui::get_frame(&g)
-        );
-
+        let frame = format!("{}", ui::get_frame(&g));
         print!("{frame}");
+
         io::stdout().flush()?; // force output now
 
         if let Ok(event) = input::handle_key_events() {
             match event {
                 input::CustomEvent::Direction(dir) => { g.dir = dir; }
+                input::CustomEvent::Restart => { g = game::Game::new(10,10); }
                 input::CustomEvent::Exit => { break; }
                 _ => { continue; }
             };

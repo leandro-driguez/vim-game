@@ -9,6 +9,7 @@ pub struct Game {
     pub grid: Vec<Vec<usize>>,
     pub dir: Direction,
     pub score: i16,
+    pub game_over: bool,
     snake: VecDeque<(usize,usize)>,
     food: (usize,usize),
 }
@@ -43,6 +44,7 @@ impl Game {
             food: (i,j),
             dir: Direction::Right,
             score: 0,
+            game_over: false,
         };
     }
 
@@ -73,6 +75,11 @@ impl Game {
             // remove the tail of the snake
             let Some((x, y)) = self.snake.pop_front() else { todo!() };
             self.grid[x][y] = 0;
+        }
+
+        // check if the snake eat itself, in that case game over
+        if self.grid[i][j] == 1 {
+           self.game_over = true; 
         }
         
         // move forward to the next position
