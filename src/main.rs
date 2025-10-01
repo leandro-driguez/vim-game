@@ -1,40 +1,12 @@
-use std::io::{self, Write};
+use color_eyre::Result;
+use ratatui;
 
 mod game;
-mod ui;
-mod input;
 
-
-fn clear() {
-    // ANSI: clear whole screen + move cursor to top left
-    print!("\x1b[2J\x1b[H");
+fn main() -> Result<()> {
+    color_eyre::install()?;
+    let mut terminal = ratatui::init();
+    let result = game::Game::new(10,10).run(&mut terminal);
+    ratatui::restore();
+    Ok(result?)
 }
-
-fn main() -> io::Result<()> {
-    
-    let mut g = game::Game::new(10,10);  
-
-    loop {
-        clear();
-
-        if !g.game_over {
-            g.update();
-        }
-
-        let frame = format!("{}", ui::get_frame(&g));
-        print!("{frame}");
-
-        io::stdout().flush()?; // force output now
-
-        if let Ok(event) = input::handle_key_events() {
-            match event {
-                input::CustomEvent::Direction(dir) => { g.dir = dir; }
-                input::CustomEvent::Restart => { g = game::Game::new(10,10); }
-                input::CustomEvent::Exit => { break; }
-                _ => { continue; }
-            };
-        }
-    }
-    Ok(())
-}
-

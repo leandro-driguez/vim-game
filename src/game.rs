@@ -1,5 +1,24 @@
 use rand::Rng;
+use ratatui::{
+    DefaultTerminal, 
+    Frame,
+    style::{Stylize, Color},
+    widgets::{
+        canvas::{Canvas, Rectangle},
+        Block,
+        Widget,
+    },
+    text::Line,
+    layout::Rect,
+    buffer::Buffer,
+    symbols::border,
+};
 use std::collections::VecDeque;
+use std::io;
+use crossterm::{
+    event::{self, Event, KeyCode},
+    terminal::{enable_raw_mode, disable_raw_mode}
+};
 
 pub enum Direction { Up, Down, Left, Right }
 
@@ -10,10 +29,104 @@ pub struct Game {
     pub dir: Direction,
     pub score: i16,
     pub game_over: bool,
+    pub exit: bool,
     snake: VecDeque<(usize,usize)>,
     food: (usize,usize),
 }
 
+/// Methods that control the TUI
+impl Game {
+    pub fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
+        while !self.exit {
+            terminal.draw(|frame| self.draw(frame))?;
+            self.handle_events()?;
+            self.update();
+        }    
+        Ok(())
+    }
+
+    pub fn draw(&self, frame: &mut Frame) {
+        frame.render_widget(self, frame.area());
+    }
+
+    pub fn handle_events(&mut self) -> io::Result<()> {
+        enable_raw_mode()?;
+
+        if event::poll(std::time::Duration::from_millis(500))? {
+            if let Event::Key(key_event) = event::read()? {
+                match key_event.code {
+                    KeyCode::Char('h') => { self.change_dir(Direction::Left); },
+                    KeyCode::Char('j') => { self.change_dir(Direction::Down); },
+                    KeyCode::Char('k') => { self.change_dir(Direction::Up); },
+                    KeyCode::Char('l') => { self.change_dir(Direction::Right); },
+                    KeyCode::Char('q') => { self.exit = true; },
+                    KeyCode::Char('r') => { self.restart(); },
+                    _ => {},
+                };
+            }
+        }
+
+        disable_raw_mode()?; 
+
+        Ok(())
+    }
+}
+
+/// Implement Widget trait to render the game
+impl Widget for &Game {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        let left = 0.0;
+        let right = f64::from(area.width);
+        let bottom = 0.0;
+        let top = f64::from(area.height);
+
+        let title = Line::from(" Snake Game ".bold());
+        let instructions = Line::from(vec![
+            " Left ".into(),
+            "<h>".blue().bold(),
+            " Right ".into(),
+            "<l>".blue().bold(),
+            " Up ".into(),
+            "<k>".blue().bold(),   
+            " Down ".into(),
+            "<j>".blue().bold(),   
+            " Restart ".into(),
+            "<r>".blue().bold(),
+            " Quit ".into(),
+            "<q> ".blue().bold(),
+        ]);
+        let block = Block::bordered()
+            .title(title.centered())
+            .title_bottom(instructions.centered())
+            .border_set(border::THICK);
+
+        Canvas::default()
+            .block(block)
+            .x_bounds([left, right])
+            .y_bounds([bottom, top])
+            .paint(|ctx| {
+                for (i,j) in &self.snake {
+                    ctx.draw(&Rectangle {
+                        x: *i as f64,
+                        y: *j as f64,
+                        width: 1.0,
+                        height: 1.0,
+                        color: Color::Blue,
+                    });
+                }
+                ctx.draw(&Rectangle{
+                    x: self.food.0 as f64,
+                    y: self.food.1 as f64,
+                    width: 1.0,
+                    height: 1.0,
+                    color: Color::Red,
+                });
+            })
+            .render(area, buf);
+    }
+}
+
+/// Internal mechanics of the Snake Game
 impl Game {
     pub fn new(h: usize, w: usize) -> Self {
         let mut rng = rand::rng();
@@ -45,10 +158,11 @@ impl Game {
             dir: Direction::Right,
             score: 0,
             game_over: false,
+            exit: false,
         };
     }
 
-    pub fn update(&mut self) {
+    fn update(&mut self) {
         // get the next position of the snake
         let (i, j) = self.next_position();
 
@@ -87,7 +201,7 @@ impl Game {
         self.grid[i][j] = 1;
     }
 
-    pub fn change_dir(&mut self, dir: Direction) {
+    fn change_dir(&mut self, dir: Direction) {
        self.dir = dir; 
     }
 
@@ -99,5 +213,9 @@ impl Game {
             Direction::Left  => (*i, (*j + self.width - 1) % self.width),
             Direction::Right => (*i, (*j + 1) % self.width),
         }
+    }
+
+    fn restart(& mut self) {
+        *self = Game::new(self.height, self.width);
     }
 }
